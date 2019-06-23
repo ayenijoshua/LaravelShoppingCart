@@ -1,0 +1,14 @@
+{
+    "name": "ayenijoshua/laravel-shopping-cart",
+    "description": "A shopping cart service for laravel applications",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ayeni Joshua",
+            "email": "larryjmpk@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}

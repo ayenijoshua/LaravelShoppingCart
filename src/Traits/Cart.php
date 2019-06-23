@@ -1,28 +1,31 @@
 <?php
-namespace AyeniJoshua\LaravelShoppingCart;
+namespace AyeniJoshua\LaravelShoppingCart\Traits;
+/**
+ * Trait for core cart functionalties
+ */
 
-use ShoppingCartException;
+use AyeniJoshua\LaravelShoppingCart\CartException;
 
-class ShoppingCart {
+trait Cart {
     public $items = null;
     public $totalQty = 0;
     public $totalPrice;
     
-    public function __construct($oldCart,$instance=null) {
-        if($instance){
-            $this->items = $instance?$this->items[$instance]:$this->items;
-        }
-       if($oldCart){
-           $this->items = $instance?$oldCart[$instance]->items:$oldCart->items;
-           $this->totalQty = $instance?$oldCart[$instance]->totalQty:$oldCart->totalQty;
-           $this->totalPrice = $instance?$oldCart[$instance]->totalPrice:$oldCart->totalPrice;
-       }
-    }
+    // public function __construct($oldCart,$instance=null) {
+    //     if($instance){
+    //         $this->items = $instance?$this->items[$instance]:$this->items;
+    //     }
+    //    if($oldCart){
+    //        $this->items = $instance?$oldCart[$instance]->items:$oldCart->items;
+    //        $this->totalQty = $instance?$oldCart[$instance]->totalQty:$oldCart->totalQty;
+    //        $this->totalPrice = $instance?$oldCart[$instance]->totalPrice:$oldCart->totalPrice;
+    //    }
+    // }
 
     /**
      * add to cart
      */
-    public function add($id,$price,$size=null){
+    public function addToCart($id,$price,$size=null){
         $storedItem = ['qty'=>0, 'price'=>$price, 'sizes'=>$size];
         $this->items = $instance?$this->items[$instance]:$this->items;
         if($this->items){
@@ -43,15 +46,16 @@ class ShoppingCart {
         }
         $this->totalQty++;
         $this->totalPrice +=  $price;
+        return $this;
     }
 
     /**
      * update cart
      */
-    public function update($id,$qty,$size=null){
+    public function updateCart($id,$qty,$size=null){
         try{
             if(!is_int($qty)){
-                throw (new ShoppingCartException())->quantity($qty);
+                throw (new CartException())->quantity($qty);
             }
             if(in_array($size,$this->items[$id]['sizes'])){// if size exists
                 $key =  array_keys($this->items[$id]['sizes'], $size); //ket size key
@@ -80,8 +84,9 @@ class ShoppingCart {
                     $this->totalQty = $this->totalQty;
                 }
                 $this->items[$id]['qty']=$qty;
+                return $this;
             }
-        }catch(ShoppingCartException $e){
+        }catch(CartException $e){
             $e->getException();
         }
         

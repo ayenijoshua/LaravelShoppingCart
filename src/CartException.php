@@ -4,7 +4,7 @@ namespace AyeniJoshua\LaravelShoppingCart;
 /**
  * Exception class for AyeniJoshua\LaravelShoppingCart
  */
-class ShoppingCartException extends \Exception{
+class CartException extends \Exception{
 
     private static $msg=null;
     /**
