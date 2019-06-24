@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace AyeniJoshua\LaravelShoppingCart\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

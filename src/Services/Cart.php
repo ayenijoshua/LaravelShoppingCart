@@ -101,8 +101,8 @@ class Cart {
      * empty the cart
      */
     public function emptyCart(){
-        if($this->items[$id]){
-            unset($this->items);
+        if($this->items){
+            unset($this);
         }
         return $this;
     }
