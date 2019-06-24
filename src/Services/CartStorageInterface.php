@@ -7,16 +7,18 @@ namespace AyeniJoshua\LaravelShoppingCart\Services;
 
  Interface CartStorageInterface {
 
-    public function add();
+    public function setName($name);
+  
+    public function add($id,$price,$size=null);
 
     public function all();
 
-    public function get();
+    public function get($id);
 
-    public function remove();
+    public function remove($id);
 
     public function empty();
 
-    public function update();
+    public function update($id,$qty,$size=null);
  }
 

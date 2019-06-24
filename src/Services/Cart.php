@@ -1,33 +1,29 @@
 <?php
-namespace AyeniJoshua\LaravelShoppingCart\Traits;
+namespace AyeniJoshua\LaravelShoppingCart\Services;
 /**
  * Trait for core cart functionalties
  */
 
 use AyeniJoshua\LaravelShoppingCart\CartException;
 
-trait Cart {
+class Cart {
     public $items = null;
     public $totalQty = 0;
     public $totalPrice;
     
-    // public function __construct($oldCart,$instance=null) {
-    //     if($instance){
-    //         $this->items = $instance?$this->items[$instance]:$this->items;
-    //     }
-    //    if($oldCart){
-    //        $this->items = $instance?$oldCart[$instance]->items:$oldCart->items;
-    //        $this->totalQty = $instance?$oldCart[$instance]->totalQty:$oldCart->totalQty;
-    //        $this->totalPrice = $instance?$oldCart[$instance]->totalPrice:$oldCart->totalPrice;
-    //    }
-    // }
+    public function __construct($oldCart) {
+       if($oldCart){
+           $this->items = $oldCart->items;
+           $this->totalQty = $oldCart->totalQty;
+           $this->totalPrice = $oldCart->totalPrice;
+       }
+    }
 
     /**
      * add to cart
      */
     public function addToCart($id,$price,$size=null){
         $storedItem = ['qty'=>0, 'price'=>$price, 'sizes'=>$size];
-        $this->items = $instance?$this->items[$instance]:$this->items;
         if($this->items){
             if(array_key_exists($id,$this->items)){
                 $storedItem = $this->items[$id]; 
@@ -89,8 +85,26 @@ trait Cart {
         }catch(CartException $e){
             $e->getException();
         }
-        
-        
+    }
+
+    /**
+     * remove an Item from the cart
+     */
+    public function removeFromCart($id){
+        if($this->items[$id]){
+            unset($this->items[$id]);
+        }
+        return $this;
+    }
+
+    /**
+     * empty the cart
+     */
+    public function emptyCart(){
+        if($this->items[$id]){
+            unset($this->items);
+        }
+        return $this;
     }
     
  }
