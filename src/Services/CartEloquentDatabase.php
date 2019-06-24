@@ -18,8 +18,8 @@ class CartEloquentDatabasee  implements CartStorageInterface {
     protected $event;
     protected $cart_name = 'default';
 
-    function __construct(Dispatcher $event, Model $model){
-        $this->model = $model;
+    function __construct(Dispatcher $event){
+        //$this->model = $model;
         $this->event = $event;
     }
 
@@ -27,21 +27,21 @@ class CartEloquentDatabasee  implements CartStorageInterface {
      * set cart instance name
      */
     private function getModel(){
-        $this->model = config('ayenicart.model_namespace','\App\Cart');
-        return $this->model;
+        $model = config('ayenicart.model_namespace','\App\Cart');
+        return $model;
     }
 
     /**
      * get cart model instance
      */
     private function modelInstance(){
-        return new $this->model;
+        return new $this->getModel();
     }
     /**
      * get the cart
      */
     private function getCart(){
-        $oldCart = class_exists($this->getModel())?$this->model::where('cart_name',$this->cart_name)->get():null;  //$this->session()->has($this->instance)?$this->session()->get($this->instance):null;
+        $oldCart = class_exists($this->getModel())?$this->getModel()::where('cart_name',$this->cart_name)->get():null;  //$this->session()->has($this->instance)?$this->session()->get($this->instance):null;
         $cart = $oldCart ? new Cart(unserialize($oldCart->cart_data)) : new Cart($oldCart);
         return $cart;
     }

@@ -7,13 +7,13 @@ use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
 
 class CartServiceProvider extends ServiceProvider
 {
+    protected $defer = true;
+
     /**
      * Bootstrap the application services.
      *
      * @return void
      */
-    private $storageClass;
-
     public function boot()
     {   
         $this->publishes([
@@ -38,11 +38,19 @@ class CartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->storageClass = $this->getStorageService();
-        $this->app->singleton('cart',function($app){
-            $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
-            return new $class($this->app['session'],$this->app['events']);
-        });
+        $multiple_storage = $this->app['config']->get('ayenicart.multiple_storage',false);
+        if($multiple_storage){
+            $this->app->bind('cart',function($app){
+                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
+                return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
+            });
+        }else{
+            $this->app->singleton('cart',function($app){
+                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
+                return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
+            });
+        }
+        
     }
 
     /**
@@ -52,14 +60,36 @@ class CartServiceProvider extends ServiceProvider
         $class = $this->app['config']->get('ayenicart.storage','session');
         switch ($class) {
             case 'session':
-                return "\App\AyeniJoshua\LaravelShoppingCart\Services\CartSessionStorage";
+                $dependencies = $this->app['config']->get('ayenicart.session.dependencies');
+                $dep_array = []; $class = [];
+                foreach ($dependencies as $key => $value) {
+                    $dep_array[] = $this->app[$value];
+                }
+                $class['dependencies'] = implode(',',$dep_array); 
+                $class['class'] = "\AyeniJoshua\LaravelShoppingCart\Services\CartSessionStorage";
+                return $class;
                 break;
+
             case 'database':
-                return $this->getDatabaseService();;
+                $dependencies = $this->app['config']->get('ayenicart.database.dependencies');
+                $dep_array = []; $class = [];
+                foreach ($dependencies as $key => $value) {
+                    $dep_array[] = $this->app[$value];
+                }
+                $class['dependencies'] = implode(',',$dep_array); 
+                $class['class'] = $this->getDatabaseService();
+                return ;
                 break;
             
             default:
-                return '\App\CartServices\Cart'.ucfirst($class)."Storage";
+                $dependencies = $this->app['config']->get("ayenicart.$class.dependencies");
+                $dep_array = []; $class = [];
+                foreach ($dependencies as $key => $value) {
+                    $dep_array[] = $this->app[$value];
+                }
+                $class['dependencies'] = implode(',',$dep_array);
+                $class['class'] = '\App\CartServices\Cart'.ucfirst($class)."Storage";
+                return $class;
                 break;
         }
     }
@@ -68,15 +98,19 @@ class CartServiceProvider extends ServiceProvider
      * get cart database storage service
      */
     public function getDatabaseService(){
-        $class = $this->app['config']->get('ayenicart.database_service','eloquent');
-        switch ($class) {
+        $service = $this->app['config']->get('ayenicart.database.service','eloquent');
+        switch ($service) {
             case 'eloquent':
-                return "\App\AyeniJoshua\LaravelShoppingCart\Services\CartEloquentDatabase";
+                return "\AyeniJoshua\LaravelShoppingCart\Services\CartEloquentDatabase";
                 break;
             
             default:
-                return '\App\CartServices\Cart'.ucfirst($class)."Database";
+                return '\App\CartServices\Cart'.ucfirst($service)."Database";
                 break;
         }
+    }
+
+    public function provides(){
+        return ['cart'];
     }
 }
