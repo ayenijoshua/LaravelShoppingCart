@@ -4,13 +4,13 @@
  */
 namespace AyeniJoshua\LaravelShoppingCart\Services;
 
-use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
+use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\Cart;
 //use Illuminate\Session\SessionManager;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
 
-class CartEloquentDatabasee  implements CartStorageInterface {
+class CartDefaultDatabaseStorage  implements CartStorageInterface {
 
 
     //public $mode = 'default-cart';
@@ -40,7 +40,7 @@ class CartEloquentDatabasee  implements CartStorageInterface {
     /**
      * get the cart
      */
-    private function getCart(){
+    public function getCart(){
         $oldCart = class_exists($this->getModel())?$this->getModel()::where('cart_name',$this->cart_name)->get():null;  //$this->session()->has($this->instance)?$this->session()->get($this->instance):null;
         $cart = $oldCart ? new Cart(unserialize($oldCart->cart_data)) : new Cart($oldCart);
         return $cart;
@@ -50,7 +50,7 @@ class CartEloquentDatabasee  implements CartStorageInterface {
      * set cart
      * set a cart_name if non exists
      */
-    private function setCart($cart,$prop=null){
+    public function setCart($cart,$prop=null){
         $model = $this->modelInstance();
         if($prop){
             $model->prop = $this->prop;
@@ -79,14 +79,14 @@ class CartEloquentDatabasee  implements CartStorageInterface {
      * get all items from cart
      */
     public function all(){
-        $this->getCart()->items;
+       return $this->getCart()->items;
     }
 
     /**
      * get an item from cart
      */
     public function get($id){
-        $this->getCart()->items[$id];
+      return  $this->getCart()->items[$id];
     }
 
     /**

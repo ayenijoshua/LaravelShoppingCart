@@ -1,9 +1,12 @@
 <?php
 
-namespace AyeniJoshua\LaravelShoppingCart;
+namespace AyeniJoshua\LaravelShoppingCart\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
+//use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
+use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultSessionStorage;
+use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage;
+use AyeniJoshua\LaravelShoppingCart\Services\CartMultipleStorage;
 
 class CartServiceProvider extends ServiceProvider
 {
@@ -29,6 +32,11 @@ class CartServiceProvider extends ServiceProvider
             __DIR__.'/database/migrations/create_carts_table.php' => database_path('migrations/create_carts_table.php'),
             __DIR__.'/Models/Cart.php' => app_path('Cart.php'),
         ],'migration');
+
+        $this->publishes([
+            __DIR__.'/Commands/create_carts_table.php' => database_path('migrations/create_carts_table.php'),
+            __DIR__.'/Models/Cart.php' => app_path('Cart.php'),
+        ],'migration');
     }
 
     /**
@@ -38,12 +46,25 @@ class CartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $multiple_storage = $this->app['config']->get('ayenicart.multiple_storage',false);
+        $multiple_storage = $this->app['config']->get('ayenicart.multiple_storage.activate',false);
+        $default = $this->app['config']->get('ayenicart.multiple_storage.default',false);
+        $class= $this->app['config']->get('ayenicart.multiple_storage.class');
+        $pendencies = $this->app['config']->get('ayenicart.multiple_storage.dependencies');
         if($multiple_storage){
-            $this->app->bind('cart',function($app){
-                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
-                return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
-            });
+            if($default){
+                $this->app->singleton('cart',function($app){
+                    return new CartMultipleStorage(CartDefaultSessionStorage::class,CartDefaultDatabaseStorage::class);
+                     // $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
+                     // return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
+                 });
+            }else{
+                $this->app->singleton('cart',function($app){
+                    return new $class($app[$dependencies[0]],$app[$dependencies[1]]);
+                });
+               
+                //return new CartMultipleStorage(CartDefaultSessionStorage::class,CartDefaultDatabaseStorage::class);
+            }
+           
         }else{
             $this->app->singleton('cart',function($app){
                 $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
@@ -66,7 +87,7 @@ class CartServiceProvider extends ServiceProvider
                     $dep_array[] = $this->app[$value];
                 }
                 $class['dependencies'] = implode(',',$dep_array); 
-                $class['class'] = "\AyeniJoshua\LaravelShoppingCart\Services\CartSessionStorage";
+                $class['class'] = $this->getSessionService();
                 return $class;
                 break;
 
@@ -81,16 +102,6 @@ class CartServiceProvider extends ServiceProvider
                 return ;
                 break;
             
-            default:
-                $dependencies = $this->app['config']->get("ayenicart.$class.dependencies");
-                $dep_array = []; $class = [];
-                foreach ($dependencies as $key => $value) {
-                    $dep_array[] = $this->app[$value];
-                }
-                $class['dependencies'] = implode(',',$dep_array);
-                $class['class'] = '\App\CartServices\Cart'.ucfirst($class)."Storage";
-                return $class;
-                break;
         }
     }
 
@@ -98,14 +109,30 @@ class CartServiceProvider extends ServiceProvider
      * get cart database storage service
      */
     public function getDatabaseService(){
-        $service = $this->app['config']->get('ayenicart.database.service','eloquent');
+        $service = $this->app['config']->get('ayenicart.database.driver','default');
         switch ($service) {
-            case 'eloquent':
-                return "\AyeniJoshua\LaravelShoppingCart\Services\CartEloquentDatabase";
+            case 'default':
+                return "\AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage";
                 break;
             
             default:
-                return '\App\CartServices\Cart'.ucfirst($service)."Database";
+                return '\App\CartServices\Cart'.ucfirst($service)."DatabaseStorage";
+                break;
+        }
+    }
+
+    /**
+     * get cart session storage service
+     */
+    public function getSessionService(){
+        $service = $this->app['config']->get('ayenicart.session.driver','default');
+        switch ($service) {
+            case 'default':
+                return "\AyeniJoshua\LaravelShoppingCart\Services\CartDefaultSessionStorage";
+                break;
+            
+            default:
+                return '\App\CartServices\Cart'.ucfirst($service)."SessionStorage";
                 break;
         }
     }

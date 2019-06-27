@@ -4,12 +4,12 @@
  */
 namespace AyeniJoshua\LaravelShoppingCart\Services;
 
-use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
+use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\Cart;
 use Illuminate\Session\SessionManager;
 use Illuminate\Contracts\Events\Dispatcher;
 
-class CartSessionStorage implements CartStorageInterface {
+class CartDefaultSessionStorage implements CartStorageInterface {
 
     public $cart_name = 'default';
     protected $session;
@@ -23,7 +23,7 @@ class CartSessionStorage implements CartStorageInterface {
     /**
      * get cart
      */
-    private function getCart(){
+    public function getCart(){
         $oldCart = $this->session()->has($this->cart_name)?$this->session()->get($this->cart_name):null;
         $cart = new Cart($oldCart);
         return $cart;
@@ -32,7 +32,7 @@ class CartSessionStorage implements CartStorageInterface {
     /**
      * set cart
      */
-    private function setCart($cart){
+    public function setCart($cart){
         $this->session()->put($this->cart_name,$cart);
     }
 
@@ -40,7 +40,7 @@ class CartSessionStorage implements CartStorageInterface {
      * set cart instance name
      */
     public function setName($name){
-        $this->instance = $name;
+        $this->cart_name = $name;
     }
 
     /**
@@ -55,14 +55,14 @@ class CartSessionStorage implements CartStorageInterface {
      * get all items from cart
      */
     public function all(){
-        $this->getCart()->items;
+      return  $this->getCart()->items;
     }
 
     /**
      * get an item from cart
      */
     public function get($id){
-        $this->getCart()->items[$id];
+      return  $this->getCart()->items[$id];
     }
 
     /**

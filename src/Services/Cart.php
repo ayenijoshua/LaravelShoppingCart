@@ -11,6 +11,9 @@ class Cart {
     public $totalQty = 0;
     public $totalPrice;
     
+    /**
+     * initialise the class
+     */
     public function __construct($oldCart) {
        if($oldCart){
            $this->items = $oldCart->items;
@@ -51,7 +54,7 @@ class Cart {
     public function updateCart($id,$qty,$size=null){
         try{
             if(!is_int($qty)){
-                throw (new CartException())->quantity($qty);
+                throw CartException::quantity($qty);
             }
             if(in_array($size,$this->items[$id]['sizes'])){// if size exists
                 $key =  array_keys($this->items[$id]['sizes'], $size); //ket size key

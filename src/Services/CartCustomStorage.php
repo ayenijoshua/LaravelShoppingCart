@@ -4,7 +4,7 @@
  */
 namespace App\CartServices;
 
-use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
+use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\Cart;
 //use Illuminate\Session\SessionManager;
 use Illuminate\Contracts\Events\Dispatcher;

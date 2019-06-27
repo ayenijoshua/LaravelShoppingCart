@@ -1,5 +1,5 @@
 <?php
-namespace AyeniJoshua\LaravelShoppingCart\Services;
+namespace AyeniJoshua\LaravelShoppingCart\Contracts;
 
 /**
  * interface to be implementd by storage implementations
