@@ -4,12 +4,13 @@ namespace AyeniJoshua\LaravelShoppingCart\Services;
  * Trait for core cart functionalties
  */
 
-use AyeniJoshua\LaravelShoppingCart\CartException;
+use AyeniJoshua\LaravelShoppingCart\Exceptions\CartException;
 
 class Cart {
     public $items = null;
     public $totalQty = 0;
-    public $totalPrice;
+    public $totalPrice = 0;
+    public $name = 'default';
     
     /**
      * initialise the class
@@ -19,95 +20,142 @@ class Cart {
            $this->items = $oldCart->items;
            $this->totalQty = $oldCart->totalQty;
            $this->totalPrice = $oldCart->totalPrice;
+           $this->name = $oldCart->name;
        }
     }
 
     /**
-     * add to cart
+     * set cart name
      */
-    public function addToCart($id,$price,$size=null){
-        $storedItem = ['qty'=>0, 'price'=>$price, 'sizes'=>$size];
-        if($this->items){
-            if(array_key_exists($id,$this->items)){
-                $storedItem = $this->items[$id]; 
-            }     
-        }
-        !is_array($storedItem['sizes'])?$storedItem['sizes']=[]:'';
-        if($size){
-            array_push($storedItem['sizes'],$size);
-            $totalSize = count($storedItem['sizes']);
-            $storedItem['qty']=$totalSize;
-            $storedItem['price'] = $price * $totalSize;
-        }else{
-            $storedItem['qty']++;
-            $storedItem['price'] = $price * $storedItem['qty'];
-            $this->items[$id] = $storedItem;
-        }
-        $this->totalQty++;
-        $this->totalPrice +=  $price;
+    public function setName($name){
+        $this->name = $name;
         return $this;
     }
 
     /**
-     * update cart
+     * add to cart
+     * @id - product id
+     * @price - product price
+     * @option - product property (e.g size or color etc)
      */
-    public function updateCart($id,$qty,$size=null){
+    public function addToCart($id,$price,$option=null){
+        try{
+            $storedItem = ['qty'=>0, 'price'=>$price, 'totalPrice'=>0, 'options'=>$option];
+            if($this->items){
+                if(array_key_exists($id,$this->items)){
+                    $storedItem = $this->items[$id]; 
+                }     
+            }
+            !is_array($storedItem['options'])?$storedItem['options']=[]:'';
+            if($option){
+                array_push($storedItem['options'],$option);
+                $totalOptions = count($storedItem['options']);
+                $storedItem['qty']=$totalOptions;
+                $storedItem['price'] = $price;
+                $storedItem['totalPrice'] = $price * $totalOptions;
+            }else{
+                $storedItem['qty']++;
+                $storedItem['price'] = $price;
+                $storedItem['totalPrice'] = $price * $storedItem['qty'];
+                $this->items[$id] = $storedItem;
+            }
+            $this->totalQty++;
+            $this->totalPrice +=  $price;
+        }catch(CartException $e){
+            $e->getException();
+        }finally{
+            return $this;
+        }
+    }
+
+    /**
+     * update cart
+     * @id - product id
+     * @qty - producnt quantity
+     * @option - product property (e.g size or color etc)
+     */
+    public function updateCart($id,$qty,$option=null){
         try{
             if(!is_int($qty)){
-                throw CartException::quantity($qty);
+                throw (new CartException('InvalidQty',$qty));
             }
-            if(in_array($size,$this->items[$id]['sizes'])){// if size exists
-                $key =  array_keys($this->items[$id]['sizes'], $size); //ket size key
-            }
-            if($this->items[$id] && abs($qty)){// if id exists and qty is supplied
+            if(count($this->items)>0 && array_key_exists($id,$this->items)){// if id exists and qty is supplied
+                if(in_array($option,$this->items[$id]['options'])){// if size exists
+                    $key =  array_keys($this->items[$id]['options'], $option); //ket size key
+                }
                 $storedItemQty = $this->items[$id]['qty'];
                 if($storedItemQty > $qty){// if stored item qty is greater than supplied qty
                     $qtyDifference = $storedItemQty - $qty;
                     $this->totalQty -= $qtyDifference;
                     $this->totalPrice -= ($this->items[$id]['price'] * $qtyDifference);
-                    if(in_array($size,$this->items[$id]['sizes'])){ //if sizes exists in item's sizes
+                    if(in_array($option,$this->items[$id]['options'])){ //if sizes exists in item's sizes
                         for($i=0;$i<($qtyDifference);$i++){
-                            array_pull($this->items[$id]['sizes'], $key[0]); 
+                            array_pull($this->items[$id]['options'], $key[0]); 
                         }
                     }
                 }elseif($storedItemQty < $qty){// if stored item qty is less than supplied qty
                     $qtyDifference = $qty - $storedItemQty;
                     $this->totalQty += $qtyDifference;
-                    $this->totalPrice -= ($this->items[$id]['price'] * $qtyDifference);
-                    if(in_array($size,$this->items[$id]['sizes'])){//if sizes exists in item's sizes
+                    $this->totalPrice += ($this->items[$id]['price'] * $qtyDifference); //$this->items[$id]['totalPrice'];
+                    if(in_array($option,$this->items[$id]['options'])){//if sizes exists in item's sizes
                         for($i=0;$i<($qtyDifference);$i++){
-                            array_push($this->items[$id]['sizes'], $key[0]); 
+                            array_push($this->items[$id]['options'], $key[0]); 
                         }
                     }
                 }else{
                     $this->totalQty = $this->totalQty;
                 }
                 $this->items[$id]['qty']=$qty;
-                return $this;
+                $this->items[$id]['totalPrice'] = $this->items[$id]['price'] * $qty;
             }
         }catch(CartException $e){
             $e->getException();
+        }finally{
+            return $this;
         }
     }
 
     /**
      * remove an Item from the cart
+     * @id - product id
      */
     public function removeFromCart($id){
-        if($this->items[$id]){
-            unset($this->items[$id]);
+        try{
+            if($this->items && array_key_exists($id,$this->items)){
+                $this->totalPrice -= $this->items[$id]['totalPrice'];
+                $this->totalQty -= $this->items[$id]['qty'];
+                unset($this->items[$id]);
+            }
+        }catch(CartException $e){
+            $e->getException();
+        }finally{
+            return $this;
         }
-        return $this;
     }
 
     /**
      * empty the cart
      */
     public function emptyCart(){
-        if($this->items){
-            unset($this);
+        try{
+            if(count($this->items)>0){
+                $this->items = null;
+                $this->totalQty = 0;
+                $this->totalPrice =0;
+            }
+        }catch(CartExeption $e){
+            $e->getException();
+        }finally{
+            return $this;
         }
-        return $this;
+    }
+
+    /**
+     * destriy the cart
+     */
+    public function destroyCart(){
+        unset($this);
+        return null;
     }
     
  }

@@ -6,11 +6,13 @@ use Illuminate\Support\ServiceProvider;
 //use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultSessionStorage;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage;
-use AyeniJoshua\LaravelShoppingCart\Services\CartMultipleStorage;
+//use Ayeni
+use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultMultipleStorage;
+use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 
 class CartServiceProvider extends ServiceProvider
 {
-    protected $defer = true;
+    //protected $defer = true;
 
     /**
      * Bootstrap the application services.
@@ -20,23 +22,16 @@ class CartServiceProvider extends ServiceProvider
     public function boot()
     {   
         $this->publishes([
-            __DIR__.'/config/cart.php' => config_path('ayenicart.php'),
-        ]);
+            __DIR__.'/../config/cart.php' => config_path('ayenicart.php'),
+        ],'config');
 
         $this->publishes([
-            __DIR__.'/Services/CartCustomStorage.php' => app_path('CartServices/CartCustomStorage.php'),
-            __DIR__.'/Services/CartCustomDatabase.php' => app_path('CartServices/CartCustomDatabase.php'),
-        ],'service');
-
-        $this->publishes([
-            __DIR__.'/database/migrations/create_carts_table.php' => database_path('migrations/create_carts_table.php'),
-            __DIR__.'/Models/Cart.php' => app_path('Cart.php'),
+            __DIR__.'/../database/migrations/2019_06_24_104625_create_carts_table.php' => database_path('migrations/2019_06_24_104625_create_carts_table.php'),
         ],'migration');
 
         $this->publishes([
-            __DIR__.'/Commands/create_carts_table.php' => database_path('migrations/create_carts_table.php'),
-            __DIR__.'/Models/Cart.php' => app_path('Cart.php'),
-        ],'migration');
+            __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
+        ],'command');
     }
 
     /**
@@ -46,32 +41,88 @@ class CartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $multiple_storage = $this->app['config']->get('ayenicart.multiple_storage.activate',false);
-        $default = $this->app['config']->get('ayenicart.multiple_storage.default',false);
-        $class= $this->app['config']->get('ayenicart.multiple_storage.class');
-        $pendencies = $this->app['config']->get('ayenicart.multiple_storage.dependencies');
-        if($multiple_storage){
-            if($default){
-                $this->app->singleton('cart',function($app){
-                    return new CartMultipleStorage(CartDefaultSessionStorage::class,CartDefaultDatabaseStorage::class);
-                     // $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
-                     // return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
-                 });
-            }else{
-                $this->app->singleton('cart',function($app){
-                    return new $class($app[$dependencies[0]],$app[$dependencies[1]]);
-                });
-               
-                //return new CartMultipleStorage(CartDefaultSessionStorage::class,CartDefaultDatabaseStorage::class);
-            }
-           
-        }else{
-            $this->app->singleton('cart',function($app){
-                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
-                return new $class['class']($class['dependencies']); //new $class['class']($this->app['events'],$this->app['session']);
-            });
-        }
+        // binding interface to implementation
+        $this->app->bind(CartStorageInterface::class, function($app){
+           return  $this->checkMultipleConnections($app);
+        });
+
+        //facade static binding
+        $this->app->singleton('cart',function($app){
+           return $this->checkMultipleConnections($app);
+        });
         
+        // binding CartDefaultSessionStorage instance
+        $this->app->instance(CartDefaultSessionStorage::class,function($app){
+            return new CartDefaultSessionStorage($app['events'],$app['session']);
+        });
+
+        // binding CartDefaultDatabaseStorage instance
+        $this->app->instance(CartDefaultDatabaseStorage::class,function($app){
+            return new CartDefaultDatabaseStorage($app['events']);
+        });
+    }
+
+    /**
+     * check user's connection (multiple or single)
+     */
+    private function checkMultipleConnections($app){
+        $multiple_storage = $this->app['config']->get('ayenicart.multiple_storage.activate',false);
+            $default = $this->app['config']->get('ayenicart.multiple_storage.default',false);
+            if($multiple_storage){
+                if($default){
+                    return new CartDefaultMultipleStorage(new CartDefaultSessionStorage($app['events'],$app['session']),new CartDefaultDatabaseStorage($app['events']));
+                }else{
+                    $dependencies = $this->app['config']->get('ayenicart.multiple_storage.dependencies');
+                    $class= $this->app['config']->get('ayenicart.multiple_storage.class');
+                    $ses_dep = $this->app['config']->get('ayenicart.session.dependencies');
+                    $db_dep = $this->app['config']->get('ayenicart.database.dependencies');
+                    $ses_dep_array = []; $db_dep_array = []; 
+                    foreach ($ses_dep as $key => $value) {
+                        $ses_dep_array[] =  $this->app[$value];
+                    }
+                    foreach ($db_dep as $key => $value) {
+                        $db_dep_array[] =  $this->app[$value];
+                    }
+                    //please use php >= 7.0
+                    return new $class(new $dependencies[0](...$ses_dep_array),$dependencies[1](...$db_dep_array));
+                }
+            }else{
+                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
+                $totalDependencies = count($class['dependencies']);
+                if(version_compare(phpversion(), '7', '>=')){ // check if php version is >= 7
+                    return new $class['class'](...$class['dependencies']);
+                }
+               return $this->switchDependencies($totalDependencies,$class);
+            }
+    }
+
+    /**
+     * switch total depencies 5 max (for php versions < 7.0)
+     */
+    public function switchDependencies($totalDependencies,$class){
+        switch ($totalDependencies) {
+            case 0:
+                return new $class['class']();
+                break;
+            case 1:
+                return new $class['class']($class['dependencies'][0]);
+                break;
+            case 2:
+                return new $class['class']($class['dependencies'][0],$class['dependencies'][1]);
+                break;
+            case 3:
+                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2]);  
+                break;
+            case 4:
+                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2],$class['dependencies'][3]);
+                break;
+            case 5:
+                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2],$class['dependencies'][3],$class['dependencies'][4]);
+                break;
+            default:
+                return new $class['class']($class['dependencies'][0],$class['dependencies'][1]);
+                break;
+        }
     }
 
     /**
@@ -82,26 +133,25 @@ class CartServiceProvider extends ServiceProvider
         switch ($class) {
             case 'session':
                 $dependencies = $this->app['config']->get('ayenicart.session.dependencies');
-                $dep_array = []; $class = [];
+                $dep_array = []; $class = []; 
                 foreach ($dependencies as $key => $value) {
-                    $dep_array[] = $this->app[$value];
+                    $dep_array[] =  $this->app[$value];
                 }
-                $class['dependencies'] = implode(',',$dep_array); 
+                $class['dependencies'] = $dep_array; 
                 $class['class'] = $this->getSessionService();
                 return $class;
                 break;
-
+               
             case 'database':
                 $dependencies = $this->app['config']->get('ayenicart.database.dependencies');
                 $dep_array = []; $class = [];
                 foreach ($dependencies as $key => $value) {
                     $dep_array[] = $this->app[$value];
                 }
-                $class['dependencies'] = implode(',',$dep_array); 
+                $class['dependencies'] = $dep_array; 
                 $class['class'] = $this->getDatabaseService();
-                return ;
-                break;
-            
+                return $class;
+                break;  
         }
     }
 
@@ -137,7 +187,7 @@ class CartServiceProvider extends ServiceProvider
         }
     }
 
-    public function provides(){
-        return ['cart'];
-    }
+    // public function provides(){
+    //     return ['cart'];
+    // }
 }

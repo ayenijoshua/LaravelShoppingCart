@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
 
 class CartFacade extends Facade {
 
-    public function getFacadeAccessor(){
+    protected static function getFacadeAccessor(){
         return 'cart';
     }
 

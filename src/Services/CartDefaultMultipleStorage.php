@@ -13,7 +13,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 
 class CartDefaultMultipleStorage implements CartStorageInterface {
 
-    public $cart_name = 'default';
+    public $storage = 'session';
     protected $session;
     protected $db;
 
@@ -22,14 +22,34 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
         $this->db = $db;
     }
 
-    function getStorage($storage='session',$sessionMtd,$dbMtd){
+    /**
+     * set cart storage service
+     */
+    function setStorage($storage){
+        $this->storage = $storage;
+        return $this;
+    }
+
+    /**
+     * get the cart storage
+     * @storage - cart storage service
+     * @sessionMtd - cart session method
+     * @dbMtd - cart dtabase method
+     */
+    function getStorage($storage=null,$sessionMtd,$dbMtd){
         try{
-            if($storage=='session'){
+            if($storage){
+                if($storage==='session' || $storage==='db'){
+                    return $this;
+                }
+                throw (new CartException('InvalidStorage'));
+            }
+            if($this->storage=='session'){
                 return $sessionMtd;
-              }elseif($storage=='db'){
+              }elseif($this->storage=='db'){
                  return $dbMtd;
               }else{
-                  throw CartException::invalidStorage("Specified storage type is invalid");
+                  throw (new CartException('InvalidStorage'));
               }  
         }catch(CartException $e){
             $e->getExeption();
@@ -38,68 +58,135 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
 
     /**
      * get cart
+     * @storage - cart storage service
      */
-    private function getCart($storage='session'){
-       return $this->getStorage($storage,$this->session->getCart(),$this->db->getCart());
+    private function getCart($name=null){
+       return $this->getStorage(null,$this->session->getCart($name),$this->db->getCart($name));
     }
 
     /**
      * set cart
-     */
-    private function setCart($storage='session',$cart){
-        $this->getStorage($storage,$this->session->setCart(),$this->db->setCart());
-        //$this->session()->put($this->cart_name,$cart);
+     *  @storage - cart storage service
+     
+    private function setCart($cart){
+        $this->getStorage(null,$this->session->setCart($cart),$this->db->setCart($cart));
     }
+    **/
 
     /**
      * set cart instance name
+     *  @storage - cart storage service
+     * @name - cart name
      */
-    public function setName($storage='session',$name){
-        $this->getStorage($storage,$this->session->setName($name),$this->db->setName($name));
-        //$this->cart_name = $name;
+    public function setName($name){
+        $this->getStorage(null,$this->session->setName($name),$this->db->setName($name));
+        return $this;
+    }
+
+    /**
+     * get cart name
+     */
+    public function getName(){
+       return $this->getStorage(null,$this->session->getCart()->name,$this->db->getCart()->name);
     }
 
     /**
      * add an item to cart
      */
-    public function add($storage='session',$id,$price,$size=null){
-        $cart = $this->getStorage($storage,$this->session->add($id,$price,$size=null),$this->db->add($id,$price,$size=null));
-        $this->setCart($storage,$cart);
+    public function add($id,$price,$option=null){
+        $cart = $this->getStorage(null,$this->session->add($id,$price,$option=null),$this->db->add($id,$price,$option=null));
+        //$this->setCart($cart);
+        return $this;
     }
 
     /**
      * get all items from cart
+     *  @storage - cart storage service
      */
-    public function all($storage='session'){
-       return $this->getCart($storage)->items;
+    public function all(){
+       return $this->getCart()->items;
     }
 
     /**
      * get an item from cart
+     *  @storage - cart storage service
+     * @id - cart item id
      */
-    public function get($storage='session',$id){
-       return $this->getCart($storage)->items[$id];
+    public function get($id){
+       return $this->getCart()->items[$id];
     }
 
     /**
      * remove an item from the cart
+     *  @storage - cart storage service
+     * @option - cart property
+     * @id - cart item id
      */
-    public function update($storage='session',$id,$qty,$size=null){
-        $cart = $this->getCart($storage)->updateCart($id,$qty,$size=null);
-        $this->setCart($storage,$cart);
+    public function update($id,$qty,$option=null){
+        $cart = $this->getCart()->updateCart($id,$qty,$option=null);
+        //$this->setCart($cart);
+        return $this;
     }
 
-    public function remove($storage='session',$id){
-       $cart =  $this->getCart($storage)->removeFromCart($id);
-       $this->setCart($storage,$cart);
+    /**
+     * remove an item from the cart
+     *  @storage - cart storage service
+     * @id - cart item id
+     */
+    public function remove($id){
+       $cart =  $this->getCart()->removeFromCart($id);
+       //$this->setCart($cart);
+       return $this;
     }
 
     /**
      * empty the cart
+     *  @storage - cart storage service
      */
-    public function empty($storage='session'){
-        $cart =  $this->getCart($storage)->emptyCart();
-        $this->setCart($storage,$cart);
+    public function empty(){
+        $cart =  $this->getCart()->emptyCart();
+        //$this->setCart($cart);
+        return $this;
+    }
+
+    /**
+     * destroy the cart
+     */
+    public function destroy(){
+        $cart = $this->getCart()->destroyCart();
+        //$this->setCart($cart);
+    }
+
+    /**
+     * restore a cart
+     */
+    public function restore($cart){
+        try{
+            $unSerialize = unserialize($cart);
+            $newCart = new $unSerialize;
+            if($newCart instanceof Cart){
+                $newCart = new Cart($cart);
+                $this->setCart($newCart);
+                return $this;
+            }
+            throw new CartException("Cart passed for restoration is invalid");
+        }catch(CartException $e){
+            $e->getException();
+        }
+    }
+
+    /**
+     * get cart total price
+     */
+    public function totalPrice(){
+        return  $this->getCart()->totalPrice;
+    }
+
+    /**
+     * get cart total price
+     */
+    public function totalQuantity(){
+        return  $this->getCart()->totalQty;
     }
 
 }

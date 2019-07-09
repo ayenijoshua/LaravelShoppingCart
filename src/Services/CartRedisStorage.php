@@ -1,24 +1,19 @@
-<?php
-/**
- * session storage implementation for shopping cart
- */
+<?php 
 namespace AyeniJoshua\LaravelShoppingCart\Services;
-
-use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
-use AyeniJoshua\LaravelShoppingCart\Services\Cart;
-use Illuminate\Session\SessionManager;
+/**
+ * redis implementation of cart storage
+ */
+use AyeniJoshua\LaravelShoppingCart\Contacts\CartStorageInterface;
+use AyeniJoshua\LaravelShoppingCart\Exceptions\CartException;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Support\Facades\Log;
-use \AyeniJoshua\LaravelShoppingCart\Exceptions\CartException;
+use Iluminate\Support\Facades\Redis;
 
-class CartDefaultSessionStorage implements CartStorageInterface {
+ class CartRedisStorage implements CartStorageInterface{
+     
+    private $event;
+    private $cart_name;
 
-    public $cart_name = 'default';
-    protected $session;
-    protected $event;
-
-    function __construct( Dispatcher $event, SessionManager $session){
-        $this->session = $session;
+    function __construct(Dispatcher $event){
         $this->event = $event;
     }
 
@@ -29,13 +24,13 @@ class CartDefaultSessionStorage implements CartStorageInterface {
     public function getCart($name=null){
         try{
             if($name){
-                if($this->session->has($name)){
+                if(Redis::get($name) && Redis::get($name)!='nil'){
                     $this->cart_name = $name;
                     return $this;
                 }
                 throw new CartException("Supplied Cart name $name does not exist");
             }
-            $oldCart = $this->session->has($this->cart_name)?$this->session->get($this->cart_name):null;
+            $oldCart = Redis::get($this->cart_name) && Redis::get($name)!='nil'?Redis::get($this->cart_name):null;
             $cart = new Cart($oldCart);
             return $cart;
         }catch(CartException $e){
@@ -48,7 +43,7 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * @cart - shopping cart
      */
     public function setCart($cart){
-        $this->session->put($this->cart_name,$cart);
+        Redis::set($this->cart_name,$cart);
     }
 
     /**
@@ -86,7 +81,7 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      */
     public function all(){
       return  $this->getCart()->items;
-      //return $this;
+      return $this;
     }
 
     /**
@@ -171,4 +166,4 @@ class CartDefaultSessionStorage implements CartStorageInterface {
         return  $this->getCart()->totalQty;
     }
 
-}
+ }

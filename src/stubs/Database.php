@@ -6,10 +6,11 @@ namespace App\CartServices;
 
 use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\Cart;
+use AyeniJoshua\LaravelShoppingCart\Exceptions\CartException;
 //use Illuminate\Session\SessionManager;
 use Illuminate\Contracts\Events\Dispatcher;
 
-class CartCustomDatabase implements CartStorageInterface {
+class classname implements CartStorageInterface {
 
     //public $mode = 'default-cart';
     protected $model;
@@ -33,7 +34,8 @@ class CartCustomDatabase implements CartStorageInterface {
      * get cart model instance
      */
     private function modelInstance(){
-        //return new $this->model;
+        //$class = $this->getModel();
+        //return new $class();
     }
     /**
      * get the cart
@@ -108,5 +110,37 @@ class CartCustomDatabase implements CartStorageInterface {
     public function empty(){
        //$cart = $this->getCart()->emptyCart();
        //$this->setCart();
+    }
+
+    /**
+     * restore a cart
+     */
+    public function restore($cart){
+        // try{
+        //     $unSerialize = unserialize($cart);
+        //     $newCart = new $unSerialize;
+        //     if($newCart instanceof Cart){
+        //         $newCart = new Cart($cart);
+        //         $this->setCart($newCart);
+        //         return $this;
+        //     }
+        //     throw new CartException("Cart passed for restoration is invalid");
+        // }catch(CartException $e){
+        //     $e->getException();
+        // }
+    }
+
+    /**
+     * total price of items in the cart
+     */
+    public function totalPrice(){
+        //return  $this->getCart()->totalPrice;
+    }
+
+    /**
+     * total quantity of items in the cart
+     */
+    public function totalQuantity(){
+        //return  $this->getCart()->totalQty;
     }
 }
