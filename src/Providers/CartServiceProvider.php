@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 //use AyeniJoshua\LaravelShoppingCart\Services\CartStorageInterface;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultSessionStorage;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage;
-//use Ayeni
+use AyeniJoshua\LaravelShoppingCart\Services\Cart as ShoppingCart;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultMultipleStorage;
 use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 
@@ -59,6 +59,11 @@ class CartServiceProvider extends ServiceProvider
         // binding CartDefaultDatabaseStorage instance
         $this->app->instance(CartDefaultDatabaseStorage::class,function($app){
             return new CartDefaultDatabaseStorage($app['events']);
+        });
+
+        //binding cart object for event handling
+        $this->app->instance(ShoppingCart::class, function(){
+            return new ShoppingCart();
         });
     }
 

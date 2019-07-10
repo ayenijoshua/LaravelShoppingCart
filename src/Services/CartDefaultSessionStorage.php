@@ -39,7 +39,7 @@ class CartDefaultSessionStorage implements CartStorageInterface {
             $cart = new Cart($oldCart);
             return $cart;
         }catch(CartException $e){
-            $e->getMessage();
+            $e->getException();
         }
     }
 
@@ -49,6 +49,9 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      */
     public function setCart($cart){
         $this->session->put($this->cart_name,$cart);
+        if (class_exists(\App\Events\CartSet::class)){
+            event(new \App\Events\CartSet($cart));
+        }
     }
 
     /**
@@ -76,8 +79,11 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * @option - product property (e.g size or color etc)
      */
     public function add($id,$price,$option=null){
-        $cart = $this->getCart()->addToCart($id,$price,$option=null);
+        $cart = $this->getCart()->addToCart($id,$price,$option);
         $this->setCart($cart);
+        if (class_exists(\App\Events\CartItemAdded::class)){
+            event(new \App\Events\CartItemAdded($cart->items[$id]));
+        }
         return $this;
     }
 
@@ -85,6 +91,9 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * get all items from cart
      */
     public function all(){
+        if (class_exists(\App\Events\CartItemsGotten::class) && $this->getCart()->items){
+            event(new \App\Events\CartItemsGotten($this->getCart()->items));
+        }
       return  $this->getCart()->items;
       //return $this;
     }
@@ -97,6 +106,9 @@ class CartDefaultSessionStorage implements CartStorageInterface {
         try{
             if(!array_key_exists($id,$this->getCart()->items)){
                 throw (new CartException('IdNotFound',$id));
+            }
+            if (class_exists(\App\Events\CartItemGotten::class)){
+                event(new \App\Events\CartItemGotten($cart->items[$id]));
             }
             return $this->getCart()->items[$id];
         }catch(CartException $e){
@@ -111,14 +123,20 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * @option - product property (e.g size or color etc)
      */
     public function update($id,$qty,$option=null){
-        $cart = $this->getCart()->updateCart($id,$qty,$option=null);
+        $cart = $this->getCart()->updateCart($id,$qty,$option);
         $this->setCart($cart);
+        if (class_exists(\App\Events\CartItemUpdated::class)){
+            event(new \App\Events\CartItemUpdated($cart->items[$id]));
+        }
         return $this;
     }
 
     public function remove($id){
        $cart =  $this->getCart()->removeFromCart($id);
        $this->setCart($cart);
+       if (class_exists(\App\Events\CartItemRemoved::class)){
+        event(new \App\Events\CartItemRemoved($cart->items[$id]));
+    }
        return $this;
     }
 
@@ -128,6 +146,9 @@ class CartDefaultSessionStorage implements CartStorageInterface {
     public function empty(){
         $cart =  $this->getCart()->emptyCart();
         $this->setCart($cart);
+        if (class_exists(\App\Events\CartEmptyed::class)){
+            event(new \App\Events\CartEmptyed($cart));
+        }
         return $this;
     }
 
@@ -135,8 +156,13 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * destroy the cart
      */
     public function destroy(){
-        $cart =  $this->getCart()->destroyCart();
-        $this->setCart($cart);
+        $this->empty();  
+        $this->getCart()->destroyCart();
+        $this->session->forget($this->cart_name);
+        unset($this);
+        if (class_exists(\App\Events\CartDestroyed::class)){
+            event(new \App\Events\CartDestroyed());
+        }
     }
 
     /**
@@ -147,14 +173,28 @@ class CartDefaultSessionStorage implements CartStorageInterface {
             $unSerialize = unserialize($cart);
             $newCart = new $unSerialize;
             if($newCart instanceof Cart){
-                $newCart = new Cart($cart);
+                $newCart = new Cart($unSerialize);
                 $this->setCart($newCart);
+                if (class_exists(\App\Events\CartRestored::class)){
+                    event(new \App\Events\CartRestored($newCart));
+                }
                 return $this;
             }
             throw new CartException("Cart passed for restoration is invalid");
         }catch(CartException $e){
             $e->getException();
         }
+    }
+
+    /**
+     * get options property in the cart
+     */
+    public function getOptions($id){
+        $options = $this->getCart()->items[$id]['options'];
+        if (class_exists(\App\Events\CartOptionsGotten::class)){
+            event(new \App\Events\CartOptionsGotten($options));
+        }
+       return $options;
     }
 
     /**

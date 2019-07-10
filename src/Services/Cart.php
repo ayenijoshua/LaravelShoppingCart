@@ -15,7 +15,7 @@ class Cart {
     /**
      * initialise the class
      */
-    public function __construct($oldCart) {
+    public function __construct($oldCart=null) {
        if($oldCart){
            $this->items = $oldCart->items;
            $this->totalQty = $oldCart->totalQty;
@@ -40,14 +40,13 @@ class Cart {
      */
     public function addToCart($id,$price,$option=null){
         try{
-            $storedItem = ['qty'=>0, 'price'=>$price, 'totalPrice'=>0, 'options'=>$option];
+            $storedItem = ['qty'=>0, 'price'=>$price, 'totalPrice'=>0, 'options'=>[]];
             if($this->items){
                 if(array_key_exists($id,$this->items)){
                     $storedItem = $this->items[$id]; 
                 }     
             }
-            !is_array($storedItem['options'])?$storedItem['options']=[]:'';
-            if($option){
+            if(!is_null($option)){
                 array_push($storedItem['options'],$option);
                 $totalOptions = count($storedItem['options']);
                 $storedItem['qty']=$totalOptions;
@@ -57,8 +56,8 @@ class Cart {
                 $storedItem['qty']++;
                 $storedItem['price'] = $price;
                 $storedItem['totalPrice'] = $price * $storedItem['qty'];
-                $this->items[$id] = $storedItem;
             }
+            $this->items[$id] = $storedItem;
             $this->totalQty++;
             $this->totalPrice +=  $price;
         }catch(CartException $e){
@@ -142,6 +141,7 @@ class Cart {
                 $this->items = null;
                 $this->totalQty = 0;
                 $this->totalPrice =0;
+                //$this->name = '';
             }
         }catch(CartExeption $e){
             $e->getException();
@@ -151,7 +151,7 @@ class Cart {
     }
 
     /**
-     * destriy the cart
+     * destroy the cart
      */
     public function destroyCart(){
         unset($this);

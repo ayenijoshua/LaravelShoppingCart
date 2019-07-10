@@ -14,6 +14,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 class CartDefaultMultipleStorage implements CartStorageInterface {
 
     public $storage = 'session';
+    public $cart_name = 'default';
     protected $session;
     protected $db;
 
@@ -39,10 +40,15 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
     function getStorage($storage=null,$sessionMtd,$dbMtd){
         try{
             if($storage){
-                if($storage==='session' || $storage==='db'){
+                if($storage==='session'){
+                    $this->storage = 'session';
                     return $this;
+                }elseif($storage=='db'){
+                    $this->storage = 'db';
+                    return $this;
+                }else{
+                    throw (new CartException('InvalidStorage'));
                 }
-                throw (new CartException('InvalidStorage'));
             }
             if($this->storage=='session'){
                 return $sessionMtd;
@@ -60,8 +66,8 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * get cart
      * @storage - cart storage service
      */
-    private function getCart($name=null){
-       return $this->getStorage(null,$this->session->getCart($name),$this->db->getCart($name));
+    private function getCart(){
+       return $this->getStorage(null,$this->session->getCart($this->cart_name),$this->db->getCart($this->cart_name));
     }
 
     /**
@@ -79,7 +85,8 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * @name - cart name
      */
     public function setName($name){
-        $this->getStorage(null,$this->session->setName($name),$this->db->setName($name));
+        $this->cart_name = $name;
+        $this->getStorage(null,$this->session->setName($this->cart_name),$this->db->setName($this->cart_name));
         return $this;
     }
 
@@ -94,8 +101,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * add an item to cart
      */
     public function add($id,$price,$option=null){
-        $cart = $this->getStorage(null,$this->session->add($id,$price,$option=null),$this->db->add($id,$price,$option=null));
-        //$this->setCart($cart);
+         $this->getCart()->add($id,$price,$option); //$this->getStorage(null,$this->session->add($id,$price,$option),$this->db->add($id,$price,$option));
         return $this;
     }
 
@@ -104,7 +110,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      *  @storage - cart storage service
      */
     public function all(){
-       return $this->getCart()->items;
+       return $this->getCart()->all();
     }
 
     /**
@@ -113,7 +119,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * @id - cart item id
      */
     public function get($id){
-       return $this->getCart()->items[$id];
+       return $this->getCart()->get($id);
     }
 
     /**
@@ -123,8 +129,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * @id - cart item id
      */
     public function update($id,$qty,$option=null){
-        $cart = $this->getCart()->updateCart($id,$qty,$option=null);
-        //$this->setCart($cart);
+        $cart = $this->getCart()->update($id,$qty,$option);
         return $this;
     }
 
@@ -134,8 +139,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * @id - cart item id
      */
     public function remove($id){
-       $cart =  $this->getCart()->removeFromCart($id);
-       //$this->setCart($cart);
+       $cart =  $this->getCart()->remove($id);
        return $this;
     }
 
@@ -144,8 +148,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      *  @storage - cart storage service
      */
     public function empty(){
-        $cart =  $this->getCart()->emptyCart();
-        //$this->setCart($cart);
+        $cart =  $this->getCart()->empty();
         return $this;
     }
 
@@ -153,7 +156,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * destroy the cart
      */
     public function destroy(){
-        $cart = $this->getCart()->destroyCart();
+        $cart = $this->getCart()->destroy();
         //$this->setCart($cart);
     }
 
@@ -162,31 +165,31 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      */
     public function restore($cart){
         try{
-            $unSerialize = unserialize($cart);
-            $newCart = new $unSerialize;
-            if($newCart instanceof Cart){
-                $newCart = new Cart($cart);
-                $this->setCart($newCart);
-                return $this;
-            }
-            throw new CartException("Cart passed for restoration is invalid");
+            $this->getCart()->restore();
         }catch(CartException $e){
             $e->getException();
         }
     }
 
     /**
+     * get options property of cart
+     */
+    public function getOptions(){
+        return $this->getCart()->getOptions();
+    }
+
+    /**
      * get cart total price
      */
     public function totalPrice(){
-        return  $this->getCart()->totalPrice;
+        return  $this->getCart()->totalPrice();
     }
 
     /**
      * get cart total price
      */
     public function totalQuantity(){
-        return  $this->getCart()->totalQty;
+        return  $this->getCart()->totalQty();
     }
 
 }
