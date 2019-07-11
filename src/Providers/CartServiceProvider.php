@@ -32,6 +32,12 @@ class CartServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
         ],'command');
+
+        //puslish events
+        $this->publishes($this->listFiles('/packages/ayenijoshua/src/Events/','Events','app_path'),'events');
+
+        //publish event listeners
+        $this->publishes($this->listFiles('/packages/ayenijoshua/src/Listeners/','Listeners','app_path'),'listeners');
     }
 
     /**
@@ -190,6 +196,26 @@ class CartServiceProvider extends ServiceProvider
                 return '\App\CartServices\Cart'.ucfirst($service)."SessionStorage";
                 break;
         }
+    }
+
+    /**
+     * list file in a directory
+     * @path - absolute path
+     * @path_dir - diectory to make iteration
+     * @path_to - laravel absolute path function e.g (app_path,base_path etc)
+     * @return - array
+     */
+    private function listFiles($path,$path_dir,$path_to){
+        $dir = base_path($path);
+        $hide = array('.','..','.DS_Store');
+        $files = scandir($dir);
+        $files_array = [];
+        foreach($files as $file){
+            if(!in_array($file,$hide)){
+                $files_array[] = array(__DIR__."/../$path_dir/$file" => $path_to("$path_dir/$file"));
+            }
+        }
+        return $files_array;
     }
 
     // public function provides(){

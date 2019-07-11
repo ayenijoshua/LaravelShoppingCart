@@ -86,7 +86,8 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      */
     public function setName($name){
         $this->cart_name = $name;
-        $this->getStorage(null,$this->session->setName($this->cart_name),$this->db->setName($this->cart_name));
+        $this->getCart()->setName($this->cart_name);
+        //$this->getStorage(null,$this->session->setName($this->cart_name),$this->db->setName($this->cart_name));
         return $this;
     }
 
@@ -94,7 +95,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * get cart name
      */
     public function getName(){
-       return $this->getStorage(null,$this->session->getCart()->name,$this->db->getCart()->name);
+       return $this->getCart()->getName(); //$this->getStorage(null,$this->session->getCart()->name,$this->db->getCart()->name);
     }
 
     /**
@@ -148,7 +149,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      *  @storage - cart storage service
      */
     public function empty(){
-        $cart =  $this->getCart()->empty();
+        $this->getCart()->empty();
         return $this;
     }
 
@@ -156,8 +157,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * destroy the cart
      */
     public function destroy(){
-        $cart = $this->getCart()->destroy();
-        //$this->setCart($cart);
+        $this->getCart()->destroy();
     }
 
     /**
@@ -165,7 +165,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      */
     public function restore($cart){
         try{
-            $this->getCart()->restore();
+            $this->getCart()->restore($cart);
         }catch(CartException $e){
             $e->getException();
         }

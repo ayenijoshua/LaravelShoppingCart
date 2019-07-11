@@ -47,7 +47,8 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * set cart
      * @cart - shopping cart
      */
-    public function setCart($cart){
+    public function setCart($cart,$name=null){
+        $this->cart_name = $name ?? $this->cart_name;
         $this->session->put($this->cart_name,$cart);
         if (class_exists(\App\Events\CartSet::class)){
             event(new \App\Events\CartSet($cart));
@@ -135,8 +136,8 @@ class CartDefaultSessionStorage implements CartStorageInterface {
        $cart =  $this->getCart()->removeFromCart($id);
        $this->setCart($cart);
        if (class_exists(\App\Events\CartItemRemoved::class)){
-        event(new \App\Events\CartItemRemoved($cart->items[$id]));
-    }
+            event(new \App\Events\CartItemRemoved($cart->items[$id]));
+        }
        return $this;
     }
 
@@ -174,7 +175,7 @@ class CartDefaultSessionStorage implements CartStorageInterface {
             $newCart = new $unSerialize;
             if($newCart instanceof Cart){
                 $newCart = new Cart($unSerialize);
-                $this->setCart($newCart);
+                $this->setCart($newCart,$newCart->name);
                 if (class_exists(\App\Events\CartRestored::class)){
                     event(new \App\Events\CartRestored($newCart));
                 }
