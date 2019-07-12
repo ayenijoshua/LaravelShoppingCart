@@ -11,6 +11,7 @@ class Cart {
     public $totalQty = 0;
     public $totalPrice = 0;
     public $name = 'default';
+    public $storage = 'session';
     
     /**
      * initialise the class
@@ -21,6 +22,7 @@ class Cart {
            $this->totalQty = $oldCart->totalQty;
            $this->totalPrice = $oldCart->totalPrice;
            $this->name = $oldCart->name;
+           $this->storage = $oldCart->storage;
        }
     }
 
@@ -28,7 +30,16 @@ class Cart {
      * set cart name
      */
     public function setName($name){
-        $this->name = $name;
+        $this->name = $name ?? $this->name;
+        return $this;
+    }
+
+    /**
+     * set storage for multiple cart storage
+     */
+    public function setStorage($storage,$name=null){
+        $this->storage = $storage ?? $this->storage;
+        $this->setName($name);
         return $this;
     }
 

@@ -10,6 +10,7 @@ use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultSessionStorage;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage;
 use AyeniJoshua\LaravelShoppingCart\Exceptions\CartException;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\Log;
 
 class CartDefaultMultipleStorage implements CartStorageInterface {
 
@@ -26,8 +27,19 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
     /**
      * set cart storage service
      */
-    function setStorage($storage){
-        $this->storage = $storage;
+    function setStorage($storage,$name=null){
+        $this->cart_name = $name ?? $this->cart_name;
+        if($storage=='session'){
+            $this->storage = 'session';
+            $this->session->setName($this->cart_name);
+            //$this->session->setStorage();
+        }elseif($storage=='db'){
+            $this->storage = 'db';
+            //$this->session->setName($this->cart_name);
+            $this->db->setStorage($this->cart_name);
+        }else{
+            $this->storage = $this->storage;
+        }
         return $this;
     }
 
@@ -47,7 +59,9 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
                     $this->storage = 'db';
                     return $this;
                 }else{
-                    throw (new CartException('InvalidStorage'));
+                   $this->storage = $this->storage;
+                   Log::info("The storage supplied is Invalid. Hence, the system chose default session Storage");
+                   return $this; 
                 }
             }
             if($this->storage=='session'){
@@ -55,7 +69,8 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
               }elseif($this->storage=='db'){
                  return $dbMtd;
               }else{
-                  throw (new CartException('InvalidStorage'));
+                Log::info("The storage supplied is Invalid. Hence, the system chose default session Storage");
+                return $sessionMtd;
               }  
         }catch(CartException $e){
             $e->getExeption();
@@ -66,18 +81,10 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * get cart
      * @storage - cart storage service
      */
-    private function getCart(){
+    public function getCart($name=null){
+        $this->cart_name = $name ?? $this->cart_name;
        return $this->getStorage(null,$this->session->getCart($this->cart_name),$this->db->getCart($this->cart_name));
     }
-
-    /**
-     * set cart
-     *  @storage - cart storage service
-     
-    private function setCart($cart){
-        $this->getStorage(null,$this->session->setCart($cart),$this->db->setCart($cart));
-    }
-    **/
 
     /**
      * set cart instance name
@@ -86,8 +93,9 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      */
     public function setName($name){
         $this->cart_name = $name;
+        //$this->storage = ($storage =='session')?'session':'db';
         $this->getCart()->setName($this->cart_name);
-        //$this->getStorage(null,$this->session->setName($this->cart_name),$this->db->setName($this->cart_name));
+        //$this->setStorage($this->storage);
         return $this;
     }
 
@@ -189,7 +197,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
      * get cart total price
      */
     public function totalQuantity(){
-        return  $this->getCart()->totalQty();
+        return  $this->getCart()->totalQuantity();
     }
 
 }

@@ -18,6 +18,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     protected $model;
     protected $event;
     protected $cart_name = 'default';
+    protected $storage='database';
 
     function __construct(Dispatcher $event){
         //$this->model = $model;
@@ -56,7 +57,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
                     $this->cart_name = $name;
                     return $this;
                 }
-                throw new CartException("Supplied Cart name $name does not exist"); 
+                return $this; 
             }
             $oldCart = class_exists($this->getModel())?$this->getModel()::where('cart_name',$this->cart_name)->first():null;
             $cart = $oldCart ? new Cart(unserialize($oldCart->cart_data)) : new Cart($oldCart);
@@ -72,6 +73,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
      */
     public function setCart($cart,$name=null){
         try{
+            //dd($cart);
             $this->cart_name = $name ?? $this->cart_name;
             $model_id = $this->getModel()::where('cart_name',$this->cart_name)->value('id');
             $model = $this->getModel()::find($model_id);
@@ -80,7 +82,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
                 $model->update();
             }else{
                 $model = $this->modelInstance();
-                $model->cart_name = $this->cart_name;
+                $model->cart_name = $cart->name;
                 $model->cart_data = serialize($cart);
                 $model->save();
             }
@@ -96,10 +98,33 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
      * set the name of the cart
      */
     public function setName($name){
-        $this->cart_name = $name;
-        $cart = $this->getCart()->setName($name);
-        $this->setCart($cart);
+        $oldCart = class_exists($this->getModel())?$this->getModel()::where('cart_name',$name)->first():null;
+        if(!$oldCart){
+            $this->cart_name = $name;
+            $cart = $this->getCart()->setName($name);
+            $this->setCart($cart);
+        }
         return $this;
+    }
+
+    /**
+     * set cart storage and name (for multiple cart storage)
+     */
+    public function setStorage($name){
+        $oldCart = class_exists($this->getModel())?$this->getModel()::where('cart_name',$name)->first():null;
+        if(!$oldCart){
+            $cart = $this->getCart()->setStorage($this->storage,$name);
+            $this->cart_name = $name;
+            $this->setCart($cart);
+        }
+        return $this;
+    }
+
+    /**
+     * get car storage
+     */
+    public function getStorage(){
+        return $this->getCart()->storage;
     }
 
     /**
@@ -112,10 +137,11 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     /**
      * add an item to cart
      */
-    public function add($id,$price,$size=null){
-        $cart = $this->getCart()->addToCart($id,$price,$size=null);
+    public function add($id,$price,$option=null){
+        $cart = $this->getCart()->addToCart($id,$price,$option);
+        //dd($cart);
         $this->setCart($cart);
-        if (class_exists(\App\Events\CartItemAdded::class)){
+        if (class_exists(\App\Events\CartItemAdded::class) && $cart->items[$id]){
             event(new \App\Events\CartItemAdded($cart->items[$id]));
         }
         return $this;
@@ -135,24 +161,32 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
      * get an item from cart
      */
     public function get($id){
-        if(!array_key_exists($id,$this->getCart()->items)){
-            throw (new CartException('IdNotFound',$id));
+        try{
+            if(!array_key_exists($id,$this->getCart()->items)){
+                throw (new CartException('IdNotFound',$id));
+            }
+            $item = $this->getCart()->items[$id];
+            if (class_exists(\App\Events\CartItemGotten::class) && $cart->items[$id]){
+                event(new \App\Events\CartItemGotten($cart->items[$id]));
+            }
+          return $item;
+        }catch(CartException $e){
+            $e->getException();
         }
-        $item = $this->getCart()->items[$id];
-        if (class_exists(\App\Events\CartItemGotten::class)){
-            event(new \App\Events\CartItemGotten($cart->items[$id]));
-        }
-      return $item;
     }
 
     /**
      * update the cart
      */
     public function update($id,$qty,$option=null){
-        $cart =  $this->getCart()->updateCart($id,$qty,$option);
-        $this->setCart($cart);
-        if (class_exists(\App\Events\CartItemUpdated::class)){
-            event(new \App\Events\CartItemUpdated($cart->items[$id]));
+        try{
+            $cart =  $this->getCart()->updateCart($id,$qty,$option);
+            $this->setCart($cart);
+            if (class_exists(\App\Events\CartItemUpdated::class) && $cart->items[$id]){
+                event(new \App\Events\CartItemUpdated($cart->items[$id]));
+            }
+        }catch(CartException $e){
+            $e->getException();
         }
     }
 
@@ -162,7 +196,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     public function remove($id){
         $cart =  $this->getCart()->removeFromCart($id);
         $this->setCart($cart);
-        if (class_exists(\App\Events\CartItemRemoved::class)){
+        if (class_exists(\App\Events\CartItemRemoved::class) && $cart->items[$id]){
             event(new \App\Events\CartItemRemoved($cart->items[$id]));
         }
      }
@@ -173,7 +207,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     public function empty(){
        $cart = $this->getCart()->emptyCart();
        $this->setCart($cart);
-       if(class_exists(\App\Events\CartEmptyed::class)){
+       if(class_exists(\App\Events\CartEmptyed::class) && $cart){
             event(new \App\Events\CartEmptyed($cart));
         }
     }
@@ -204,7 +238,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
      */
     public function getOptions($id){
         $options = $this->getCart()->items[$id]['options'];
-        if (class_exists(\App\Events\CartOptionsGotten::class)){
+        if (class_exists(\App\Events\CartOptionsGotten::class) && $options){
             event(new \App\Events\CartOptionsGotten($options));
         }
        return $options;
@@ -219,8 +253,9 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
             $newCart = new $unSerialize;
             if($newCart instanceof Cart){
                 $newCart = new Cart($cart);
-                $this->setCart($newCart,$newCart->name);
-                if (class_exists(\App\Events\CartRestored::class)){
+                $this->setStorage($newCart->name ?? $this->cart_name)->setCart($newCart);
+                //$this->setCart($newCart,$newCart->name);
+                if (class_exists(\App\Events\CartRestored::class) && $newCart){
                     event(new \App\Events\CartRestored($newCart));
                 }
                 return $this;

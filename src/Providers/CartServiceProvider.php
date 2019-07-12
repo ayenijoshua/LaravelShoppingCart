@@ -9,7 +9,7 @@ use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultDatabaseStorage;
 use AyeniJoshua\LaravelShoppingCart\Services\Cart as ShoppingCart;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultMultipleStorage;
 use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
-
+use Illuminate\Support\Facades\Log;
 class CartServiceProvider extends ServiceProvider
 {
     //protected $defer = true;
@@ -34,10 +34,24 @@ class CartServiceProvider extends ServiceProvider
         ],'command');
 
         //puslish events
-        $this->publishes($this->listFiles('/packages/ayenijoshua/src/Events/','Events','app_path'),'events');
+        $this->publishes([
+            __DIR__.'/../Events/CartDestroyed.php' => app_path('Events/CartDestroyed.php'),
+            __DIR__.'/../Events/CartEmptyed.php' => app_path('Events/CartEmptied.php'),
+            __DIR__.'/../Events/CartItemAdded.php' => app_path('Events/CartItemAdded.php'),
+            __DIR__.'/../Events/CartItemGotten.php' => app_path('Events/CartItemGotten.php'),
+            __DIR__.'/../Events/CartItemRemoved.php' => app_path('Events/CartItemRemoved.php'),
+            __DIR__.'/../Events/CartItemsGotten.php' => app_path('Events/CartItemsGotten.php'),
+            __DIR__.'/../Events/CartItemUpdated.php' => app_path('Events/CartItemUpdated.php'),
+            __DIR__.'/../Events/CartOptionsGotten.php' => app_path('Events/CartOptionsGotten.php'),
+            __DIR__.'/../Events/CartRestored.php' => app_path('Events/CartRestored.php'),
+            __DIR__.'/../Events/CartSet.php' => app_path('Events/CartSet.php')
+        ],'events');
 
-        //publish event listeners
-        $this->publishes($this->listFiles('/packages/ayenijoshua/src/Listeners/','Listeners','app_path'),'listeners');
+        //publish listeners
+        $this->publishes([
+            __DIR__.'/../Listeners/CartEventSubscriber.php' => app_path('Listeners/CartEventSubscriber.php'),
+        ],'listeners');
+        
     }
 
     /**
@@ -205,18 +219,21 @@ class CartServiceProvider extends ServiceProvider
      * @path_to - laravel absolute path function e.g (app_path,base_path etc)
      * @return - array
      */
-    private function listFiles($path,$path_dir,$path_to){
-        $dir = base_path($path);
-        $hide = array('.','..','.DS_Store');
-        $files = scandir($dir);
-        $files_array = [];
-        foreach($files as $file){
-            if(!in_array($file,$hide)){
-                $files_array[] = array(__DIR__."/../$path_dir/$file" => $path_to("$path_dir/$file"));
-            }
-        }
-        return $files_array;
-    }
+    //private function listFiles($path,$path_dir,$path_to){
+    //     $dir = base_path($path);
+    //     $hide = array('.','..','.DS_Store');
+    //     $files = scandir($dir);
+    //     $files_array = [];
+    //     foreach($files as $file){
+    //         if(!in_array($file,$hide)){
+    //             $files_array[] = array(__DIR__."/../$path_dir/$file" => app_path("$path_dir/$file"));
+    //         }
+    //     }
+    //     //Log::info(...$files_array);
+    //     //Log::info(collect($files_array)->flatten(2));
+    //     $col = collect($files_array)->toArray; Log::info(implode(',',$col));
+    //     return collect($files_array)->values()->all();
+    // }
 
     // public function provides(){
     //     return ['cart'];
