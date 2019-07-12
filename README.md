@@ -233,36 +233,36 @@ as you can extend it by implementing the interface. You can also listen to event
 
   ##### Fluent interfacing 
         ```
-        Class ProductController extends Controller{
+            Class ProductController extends Controller{
 
-            function __construct(CartStorageInterface $cart){
-        
-                $this->cart = $cart;
+                function __construct(CartStorageInterface $cart){
+            
+                    $this->cart = $cart;
+                }
+
+                function addProduct(){
+                    
+                    $cart = $this->cart->setStorage('db','product-cart')->add(1,200); 
+                    The above sets cart's storage to database and name to product-cart, adds item to cart and gets the cart name
+
+                    $cart = $this->cart->setStorage('session','product-cart')->add(1,200)->getName(); 
+                    The above sets cart's storage to session and name to product-cart and gets the cart name
+
+                    $cart->getCart('product-cart')->getStorage();
+                    the above get an instance of the last cart and get its storage type
+                }
+
+
+                function restoreCart(){
+                    for instance, if you want to restore the cart later on in your application
+                        $order = \App\Order::find(1);
+                        $savedCart = $order->saved_cart;
+                        //you can restore the cart like this
+                        $cart = $this->cart->restore($savedCart);
+                        $cart->all();
+                        $cart->getName();
+                }
             }
-
-            function addProduct(){
-                
-                $cart = $this->cart->setStorage('db','product-cart')->add(1,200); 
-                The above sets cart's storage to database and name to product-cart, adds item to cart and gets the cart name
-
-                $cart = $this->cart->setStorage('session','product-cart')->add(1,200)->getName(); 
-                The above sets cart's storage to session and name to product-cart and gets the cart name
-
-                $cart->getCart('product-cart')->getStorage();
-                the above get an instance of the last cart and get its storage type
-            }
-
-
-            function restoreCart(){
-                for instance, if you want to restore the cart later on in your application
-                    $order = \App\Order::find(1);
-                    $savedCart = $order->saved_cart;
-                    //you can restore the cart like this
-                    $cart = $this->cart->restore($savedCart);
-                    $cart->all();
-                    $cart->getName();
-            }
-        }
         ```
 
 ### Events and listeners
