@@ -122,7 +122,7 @@ class CartServiceProvider extends ServiceProvider
     }
 
     /**
-     * switch total depencies 5 max (for php versions < 7.0)
+     * switch total dependencies 5 max (for php versions < 7.0)
      */
     public function switchDependencies($totalDependencies,$class){
         switch ($totalDependencies) {

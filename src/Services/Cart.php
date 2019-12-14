@@ -165,8 +165,10 @@ class Cart {
      * destroy the cart
      */
     public function destroyCart(){
-        unset($this);
-        return null;
+        unset($this->items);
+        unset($this->totalPrice);
+        unset($this->totalQty);
+        //return null;
     }
     
  }

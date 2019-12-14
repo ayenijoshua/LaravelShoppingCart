@@ -34,7 +34,7 @@ use Iluminate\Support\Facades\Redis;
             $cart = new Cart($oldCart);
             return $cart;
         }catch(CartException $e){
-            $e->getMessage();
+            $e->getException();
         }
     }
 

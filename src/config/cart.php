@@ -9,7 +9,7 @@ return [
     'storage'=>'database', //session, database (only)
 
     /**
-     * inscase you want to use multiple storage services (e.g session and database together)
+     * incase you want to use multiple storage services (e.g session and database together)
      * this default setting is good for most applications
      */
     'multiple_storage'=>[
@@ -26,7 +26,7 @@ return [
      * this default setting is good for most applications
      */
     'session'=>[
-        'driver'=>'default', //you could configure this to e.g(dtabase, redis etc)
+        'driver'=>'default', //you could configure this to e.g(database, redis etc)
         'dependencies' => [  //Get the registered name of the component you want to use as dependencies.
             'events','session' 
         ]
