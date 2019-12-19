@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace AyeniJoshua\LaravelShoppingCart\Commands; //App\Console\Commands;
 
 use Illuminate\Console\Command;
 
