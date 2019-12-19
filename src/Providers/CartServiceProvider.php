@@ -26,9 +26,17 @@ class CartServiceProvider extends ServiceProvider
             __DIR__.'/../config/cart.php' => config_path('ayenicart.php'),
         ],'config');
 
-        $this->publishes([
-            __DIR__.'/../database/migrations/2019_06_24_104625_create_carts_table.php' => database_path('migrations/2019_06_24_104625_create_carts_table.php'),
-        ],'migration');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations/2019_06_24_104625_create_carts_table.php');
+
+        if($this->app->runningInConsole()){
+            $this->commands([
+
+            ]);
+        }
+
+        // $this->publishes([
+        //     __DIR__.'/../database/migrations/2019_06_24_104625_create_carts_table.php' => database_path('migrations/2019_06_24_104625_create_carts_table.php'),
+        // ],'migration');
 
         $this->publishes([
             __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
