@@ -122,12 +122,12 @@ class CartServiceProvider extends ServiceProvider
                     return new $class(new $dependencies[0](...$ses_dep_array),$dependencies[1](...$db_dep_array));
                 }
             }else{
-                $class = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
-                $totalDependencies = count($class['dependencies']);
+                $storage = $this->getStorageService();//$this->storageClass($this->app['session'],$this->app['events']);
+                $totalDependencies = count($storage['dependencies']);
                 if(version_compare(phpversion(), '7', '>=')){ // check if php version is >= 7
-                    return new $class['class'](...$class['dependencies']);
+                    return new $storage['class'](...$storage['dependencies']);
                 }
-               return $this->switchDependencies($totalDependencies,$class);
+               return $this->switchDependencies($totalDependencies,$storage);
             }
     }
 
@@ -161,20 +161,20 @@ class CartServiceProvider extends ServiceProvider
     }
 
     /**
-     * get cart session storage
+     * get cart storage service
      */
     public function getStorageService(){
-        $class = $this->app['config']->get('ayenicart.storage','session');
-        switch ($class) {
+        $storage = $this->app['config']->get('ayenicart.storage','session'); // session is the default storage
+        switch ($storage) {
             case 'session':
                 $dependencies = $this->app['config']->get('ayenicart.session.dependencies');
                 $dep_array = []; $class = []; 
                 foreach ($dependencies as $key => $value) {
                     $dep_array[] =  $this->app[$value];
                 }
-                $class['dependencies'] = $dep_array; 
-                $class['class'] = $this->getSessionService();
-                return $class;
+                $storage['dependencies'] = $dep_array; 
+                $storage['class'] = $this->getSessionService();
+                return $storage;
                 break;
                
             case 'database':
@@ -183,9 +183,9 @@ class CartServiceProvider extends ServiceProvider
                 foreach ($dependencies as $key => $value) {
                     $dep_array[] = $this->app[$value];
                 }
-                $class['dependencies'] = $dep_array; 
-                $class['class'] = $this->getDatabaseService();
-                return $class;
+                $storage['dependencies'] = $dep_array; 
+                $storage['class'] = $this->getDatabaseService();
+                return $storage;
                 break;  
         }
     }
