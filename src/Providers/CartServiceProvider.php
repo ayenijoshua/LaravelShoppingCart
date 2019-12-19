@@ -42,7 +42,7 @@ class CartServiceProvider extends ServiceProvider
         //     __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
         // ],'command');
 
-        //puslish events
+        //puslish events and listeners
         $this->publishes([
             __DIR__.'/../Events/CartDestroyed.php' => app_path('Events/CartDestroyed.php'),
             __DIR__.'/../Events/CartEmptyed.php' => app_path('Events/CartEmptied.php'),
@@ -54,13 +54,13 @@ class CartServiceProvider extends ServiceProvider
             __DIR__.'/../Events/CartOptionsGotten.php' => app_path('Events/CartOptionsGotten.php'),
             __DIR__.'/../Events/CartRestored.php' => app_path('Events/CartRestored.php'),
             __DIR__.'/../Events/CartSet.php' => app_path('Events/CartSet.php'),
-            
+            __DIR__.'/../Listeners/CartEventSubscriber.php' => app_path('Listeners/CartEventSubscriber.php'),
         ],'events');
 
         //publish listeners
-        $this->publishes([
-            __DIR__.'/../Listeners/CartEventSubscriber.php' => app_path('Listeners/CartEventSubscriber.php'),
-        ],'listeners');
+        // $this->publishes([
+        //     __DIR__.'/../Listeners/CartEventSubscriber.php' => app_path('Listeners/CartEventSubscriber.php'),
+        // ],'listeners');
         
     }
 
