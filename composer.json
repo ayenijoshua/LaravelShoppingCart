@@ -10,5 +10,15 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {},
+    "extra": {
+        "laravel":{
+            "providers": [
+                "AyeniJoshua\\LaravelShoppingCart\\Providers\\CartServiceProvider::class"
+            ],
+            "aliases":{
+                "Cart": "AyeniJoshua\\LaravelShoppingCart\\Facades\\CartFacade::class"
+            }
+        }
+    }
 }
