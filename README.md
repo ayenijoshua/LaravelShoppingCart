@@ -117,14 +117,14 @@ as you can extend it by implementing the interface. You can also listen to event
       ```
       Cart::getCart($name)
       $name - cart name
-      e.g $cart - $this->cart->getCart('whishlist')->add(params);
+      e.g $cart = $this->cart->getCart('whishlist')->add(params);
       ```
 
  #### Get cart instance not recommended (Cart)
      ```
      Cart::getCart();
      Note - You will not have access to the storage manager's methods.
-     Methods avaailable are - (setName(),addToCart,updateCart,emptyCart and destroyCart)
+     Methods available are - (setName,addToCart,updateCart,emptyCart and destroyCart)
      ```
 
 #### Get total price

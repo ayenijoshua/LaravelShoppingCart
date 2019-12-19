@@ -10,6 +10,7 @@ use AyeniJoshua\LaravelShoppingCart\Services\Cart as ShoppingCart;
 use AyeniJoshua\LaravelShoppingCart\Services\CartDefaultMultipleStorage;
 use AyeniJoshua\LaravelShoppingCart\Contracts\CartStorageInterface;
 use Illuminate\Support\Facades\Log;
+
 class CartServiceProvider extends ServiceProvider
 {
     //protected $defer = true;

@@ -73,7 +73,7 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
                 return $sessionMtd;
               }  
         }catch(CartException $e){
-            $e->getExeption();
+            $e->getException();
         }
     }
 

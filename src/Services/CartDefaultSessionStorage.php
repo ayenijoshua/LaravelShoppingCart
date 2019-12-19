@@ -177,7 +177,7 @@ class CartDefaultSessionStorage implements CartStorageInterface {
         $this->empty();  
         $this->getCart()->destroyCart();
         $this->session->forget($this->cart_name);
-        unset($this);
+        //unset($this);
         if (class_exists(\App\Events\CartDestroyed::class)){
             event(new \App\Events\CartDestroyed());
         }
