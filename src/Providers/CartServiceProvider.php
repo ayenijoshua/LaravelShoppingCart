@@ -30,7 +30,7 @@ class CartServiceProvider extends ServiceProvider
 
         if($this->app->runningInConsole()){
             $this->commands([
-
+                \AyeniJoshua\LaravelShoppingCart\Commands\GenerateCartStorage::class
             ]);
         }
 
@@ -38,9 +38,9 @@ class CartServiceProvider extends ServiceProvider
         //     __DIR__.'/../database/migrations/2019_06_24_104625_create_carts_table.php' => database_path('migrations/2019_06_24_104625_create_carts_table.php'),
         // ],'migration');
 
-        $this->publishes([
-            __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
-        ],'command');
+        // $this->publishes([
+        //     __DIR__.'/../Commands/GenerateCartStorage.php' => app_path('Console/Commands/GenerateCartStorage.php'),
+        // ],'command');
 
         //puslish events
         $this->publishes([
@@ -53,7 +53,8 @@ class CartServiceProvider extends ServiceProvider
             __DIR__.'/../Events/CartItemUpdated.php' => app_path('Events/CartItemUpdated.php'),
             __DIR__.'/../Events/CartOptionsGotten.php' => app_path('Events/CartOptionsGotten.php'),
             __DIR__.'/../Events/CartRestored.php' => app_path('Events/CartRestored.php'),
-            __DIR__.'/../Events/CartSet.php' => app_path('Events/CartSet.php')
+            __DIR__.'/../Events/CartSet.php' => app_path('Events/CartSet.php'),
+            
         ],'events');
 
         //publish listeners
