@@ -109,8 +109,8 @@ class CartDefaultMultipleStorage implements CartStorageInterface {
     /**
      * add an item to cart
      */
-    public function add($id,$price,$option=null){
-         $this->getCart()->add($id,$price,$option); //$this->getStorage(null,$this->session->add($id,$price,$option),$this->db->add($id,$price,$option));
+    public function add($id,$item,$qty,$option=null){
+         $this->getCart()->add($id,$item,$qty,$option); //$this->getStorage(null,$this->session->add($id,$price,$option),$this->db->add($id,$price,$option));
         return $this;
     }
 

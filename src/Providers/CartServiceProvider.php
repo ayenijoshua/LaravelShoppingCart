@@ -134,28 +134,28 @@ class CartServiceProvider extends ServiceProvider
     /**
      * switch total dependencies 5 max (for php versions < 7.0)
      */
-    public function switchDependencies($totalDependencies,$class){
+    public function switchDependencies($totalDependencies,$storage){
         switch ($totalDependencies) {
             case 0:
-                return new $class['class']();
+                return new $storage['class']();
                 break;
             case 1:
-                return new $class['class']($class['dependencies'][0]);
+                return new $storage['class']($storage['dependencies'][0]);
                 break;
             case 2:
-                return new $class['class']($class['dependencies'][0],$class['dependencies'][1]);
+                return new $storage['class']($storage['dependencies'][0],$storage['dependencies'][1]);
                 break;
             case 3:
-                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2]);  
+                return new $storage['class']($storage['dependencies'][0],$storage['dependencies'][1],$storage['dependencies'][2]);  
                 break;
             case 4:
-                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2],$class['dependencies'][3]);
+                return new $storage['class']($storage['dependencies'][0],$storage['dependencies'][1],$storage['dependencies'][2],$storage['dependencies'][3]);
                 break;
             case 5:
-                return new $class['class']($class['dependencies'][0],$class['dependencies'][1],$class['dependencies'][2],$class['dependencies'][3],$class['dependencies'][4]);
+                return new $storage['class']($storage['dependencies'][0],$storage['dependencies'][1],$storage['dependencies'][2],$storage['dependencies'][3],$storage['dependencies'][4]);
                 break;
             default:
-                return new $class['class']($class['dependencies'][0],$class['dependencies'][1]);
+                return new $storage['class']($storage['dependencies'][0],$storage['dependencies'][1]);
                 break;
         }
     }

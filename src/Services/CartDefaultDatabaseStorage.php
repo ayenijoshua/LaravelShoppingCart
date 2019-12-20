@@ -121,7 +121,7 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     }
 
     /**
-     * get car storage
+     * get cart storage
      */
     public function getStorage(){
         return $this->getCart()->storage;
@@ -137,8 +137,8 @@ class CartDefaultDatabaseStorage  implements CartStorageInterface {
     /**
      * add an item to cart
      */
-    public function add($id,$price,$option=null){
-        $cart = $this->getCart()->addToCart($id,$price,$option);
+    public function add($id,$item,$qty,$option=null){
+        $cart = $this->getCart()->addToCart($id,$item,$qty,$option);
         //dd($cart);
         $this->setCart($cart);
         if (class_exists(\App\Events\CartItemAdded::class) && $cart->items[$id]){

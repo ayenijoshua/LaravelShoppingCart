@@ -47,30 +47,31 @@ class Cart {
      * add to cart
      * @id - product id
      * @price - product price
-     * @option - product property (e.g size or color etc)
+     * @variants - product property (e.g size or color etc)
      */
-    public function addToCart($id,$price,$option=null){
+    public function addToCart($id,$item,$qty=0,$variant=null){
         try{
-            $storedItem = ['qty'=>0, 'price'=>$price, 'totalPrice'=>0, 'options'=>[]];
+            //if( ($this->items['id']['qty']) + $qty) > $this
+            $storedItem = ['item'=>$item, 'qty'=>$qty, 'totalPrice'=>0, 'variants'=>[]];
             if($this->items){
                 if(array_key_exists($id,$this->items)){
                     $storedItem = $this->items[$id]; 
                 }     
             }
-            if(!is_null($option)){
-                array_push($storedItem['options'],$option);
-                $totalOptions = count($storedItem['options']);
-                $storedItem['qty']=$totalOptions;
-                $storedItem['price'] = $price;
-                $storedItem['totalPrice'] = $price * $totalOptions;
+            if(!is_null($variant)){
+                array_push($storedItem['variants'],$variant);
+                $totalVariants = ($qty>0) ? $qty + count($storedItem['variants']) : count($storedItem['variants']);
+                $storedItem['qty']=$totalVariants;
+                //$storedItem['price'] = $price;
+                $storedItem['totalPrice'] = $storedItem['item']->price * $totalVariants;
             }else{
-                $storedItem['qty']++;
-                $storedItem['price'] = $price;
-                $storedItem['totalPrice'] = $price * $storedItem['qty'];
+                ($qty>0) ? $storedItem['qty'] : $storedItem['qty']++;
+                //$storedItem['price'] = $price;
+                $storedItem['totalPrice'] = $storedItem['item']->price * $storedItem['qty'];
             }
             $this->items[$id] = $storedItem;
             $this->totalQty++;
-            $this->totalPrice +=  $price;
+            $this->totalPrice +=  $storedItem['item']->price;
         }catch(CartException $e){
             $e->getException();
         }finally{
@@ -84,39 +85,39 @@ class Cart {
      * @qty - producnt quantity
      * @option - product property (e.g size or color etc)
      */
-    public function updateCart($id,$qty,$option=null){
+    public function updateCart($id,$qty,$variant=null){
         try{
             if(!is_int($qty)){
                 throw (new CartException('InvalidQty',$qty));
             }
             if(count($this->items)>0 && array_key_exists($id,$this->items)){// if id exists and qty is supplied
-                if(in_array($option,$this->items[$id]['options'])){// if size exists
-                    $key =  array_keys($this->items[$id]['options'], $option); //ket size key
+                if(in_array($variant,$this->items[$id]['variants'])){// if size exists
+                    $key =  array_keys($this->items[$id]['variants'], $variant); //ket size key
                 }
                 $storedItemQty = $this->items[$id]['qty'];
                 if($storedItemQty > $qty){// if stored item qty is greater than supplied qty
                     $qtyDifference = $storedItemQty - $qty;
                     $this->totalQty -= $qtyDifference;
-                    $this->totalPrice -= ($this->items[$id]['price'] * $qtyDifference);
-                    if(in_array($option,$this->items[$id]['options'])){ //if sizes exists in item's sizes
+                    $this->totalPrice -= ($this->items[$id]['item']->price * $qtyDifference);
+                    if(in_array($variant,$this->items[$id]['variants'])){ //if sizes exists in item's sizes
                         for($i=0;$i<($qtyDifference);$i++){
-                            array_pull($this->items[$id]['options'], $key[0]); 
+                            array_pull($this->items[$id]['variants'], $key[0]); 
                         }
                     }
                 }elseif($storedItemQty < $qty){// if stored item qty is less than supplied qty
                     $qtyDifference = $qty - $storedItemQty;
                     $this->totalQty += $qtyDifference;
-                    $this->totalPrice += ($this->items[$id]['price'] * $qtyDifference); //$this->items[$id]['totalPrice'];
-                    if(in_array($option,$this->items[$id]['options'])){//if sizes exists in item's sizes
+                    $this->totalPrice += ($this->items[$id]['item']->price * $qtyDifference); //$this->items[$id]['totalPrice'];
+                    if(in_array($option,$this->items[$id]['variants'])){//if sizes exists in item's sizes
                         for($i=0;$i<($qtyDifference);$i++){
-                            array_push($this->items[$id]['options'], $key[0]); 
+                            array_push($this->items[$id]['variants'], $key[0]); 
                         }
                     }
                 }else{
                     $this->totalQty = $this->totalQty;
                 }
                 $this->items[$id]['qty']=$qty;
-                $this->items[$id]['totalPrice'] = $this->items[$id]['price'] * $qty;
+                $this->items[$id]['totalPrice'] = $this->items[$id]['item']->price * $qty;
             }
         }catch(CartException $e){
             $e->getException();

@@ -96,8 +96,8 @@ class CartDefaultSessionStorage implements CartStorageInterface {
      * @price - item price
      * @option - product property (e.g size or color etc)
      */
-    public function add($id,$price,$option=null){
-        $cart = $this->getCart()->addToCart($id,$price,$option);
+    public function add($id,$item,$qty,$option=null){
+        $cart = $this->getCart()->addToCart($id,$item,$qty,$option);
         $this->setCart($cart);
         if (class_exists(\App\Events\CartItemAdded::class) && $cart->items[$id]){
             event(new \App\Events\CartItemAdded($cart->items[$id]));

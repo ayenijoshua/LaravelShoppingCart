@@ -17,7 +17,7 @@ namespace AyeniJoshua\LaravelShoppingCart\Contracts;
    /**
     * add an item to the cart
     */
-    public function add($id,$price,$option=null);
+    public function add($id,$item,$qty,$option=null);
    /**
     * get all items from the cart
     */
